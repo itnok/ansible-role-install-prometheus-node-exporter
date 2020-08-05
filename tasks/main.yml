@@ -1,0 +1,107 @@
+---
+# tasks file for ansible-role-install-prometheus-node-exporter
+- include_vars: "main.yml"
+
+- name: "Gather facts"
+  setup:    # equivalent to "gather_facts: yes"
+
+- name: "Check latest release available of Prometheus Node Exporter"
+  uri:
+    url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"
+    return_content: yes
+  register: latest_node_exporter
+
+- name: "Download list of SHA256 checksums for {{ install_prometheus }} release of Prometheus Node Exporter"
+  get_url:
+    url: "{{ item.browser_download_url }}"
+    dest: "/tmp/node_exporter-sha256sums.txt"
+  with_items: "{{ latest_node_exporter.json.assets }}"
+  when:
+    - item.name is search("sha256sums")
+
+- name: "Create download info for {{ install_prometheus }} release of Prometheus Node Exporter"
+  set_fact:
+    install_prometheus_node_exporter:
+      url: "{{ item.browser_download_url }}"
+      name: "{{ item.name }}"
+  with_items: "{{ latest_node_exporter.json.assets }}"
+  when:
+    - item.name is search("linux-amd64")
+    - ansible_facts["distribution"] == "Ubuntu" or
+      ansible_facts["distribution"] == "Debian"
+
+- name: "Add SHA256 checksum for {{ install_prometheus }} release to 'install_prometheus_node_exporter' fact"
+  set_fact:
+    install_prometheus_node_exporter: "{{ install_prometheus_node_exporter | combine({ 'sha256sum': item.split()[0] }) }}"
+  with_lines: cat "/tmp/node_exporter-sha256sums.txt"
+  when: item is search("{{ install_prometheus_node_exporter.name }}")
+
+- name: "Download {{ install_prometheus }} release of Prometheus Node Exporter"
+  get_url:
+    url: "{{ install_prometheus_node_exporter.url }}"
+    dest: "/tmp/{{ install_prometheus_node_exporter.name }}"
+    checksum: "sha256:{{ install_prometheus_node_exporter.sha256sum }}"
+
+- name: "Create a dedicated system user for Prometheus Node Exporter"
+  user:
+    name: node_exporter
+    shell: /bin/false
+    system: yes
+    create_home: no
+    state: present
+
+- name: "Extract 'node_exporter' from {{ install_prometheus_node_exporter.name }}"
+  unarchive:
+    src: "/tmp/{{ install_prometheus_node_exporter.name }}"
+    dest: /usr/local/bin
+    extra_opts:
+      - --strip=1
+      - --wildcards
+      - '*/node_exporter'
+    owner: "node_exporter"
+    group: "node_exporter"
+    remote_src: yes
+
+- name: "Set the systemd service file up for Prometheus Node Exporter"
+  ini_file:
+    path: "/etc/systemd/system/node_exporter.service"
+    create: yes
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    mode: "0644"
+    owner: root
+    group: root
+    no_extra_spaces: yes
+    backup: no
+    state: present
+  with_items:
+    - { section: "Unit", option: "Description", value: "Prometheus Node Exporter" }
+    - { section: "Unit", option: "Wants", value: "network-online.target" }
+    - { section: "Unit", option: "After", value: "network-online.target" }
+    - { section: "Service", option: "User", value: "node_exporter" }
+    - { section: "Service", option: "Group", value: "node_exporter" }
+    - { section: "Service", option: "Type", value: "simple" }
+    - { section: "Service", option: "ExecStart", value: "/usr/local/bin/node_exporter" }
+    - { section: "Install", option: "WantedBy", value: "multi-user.target" }
+
+- name: "Ensure better spacing between sections in systemd service file"
+  lineinfile:
+    path: "/etc/systemd/system/node_exporter.service"
+    insertafter: '^{{ item.regex }}'
+    firstmatch: no
+    line: ""
+    state: present
+  with_items:
+    - { regex: "After=.*" }
+    - { regex: "ExecStart=.*" }
+
+- name: "Force systemd to reread configuration files for services"
+  systemd:
+    daemon_reload: yes
+
+- name: "Enable and restart systemd service for Prometheus Node Exporter"
+  systemd:
+    name: "node_exporter"
+    enabled: yes
+    state: restarted
