@@ -7,9 +7,15 @@ Install Prometheus Node Exporter on a supported host.
 
 Steps performed are:
 
-  - Using role [itnok.manage_pkg_ubuntu](https://galaxy.ansible.com/itnok/manage_pkg_ubuntu):
-    * Make sure curl package is installed
   - Find latest Prometheus Node Exporter release available _(or the specified one)_
+  - Check latest release available of Prometheus Node Exporter
+  - Download list of SHA256 checksums for the specified release of Prometheus Node Exporter"
+  - Download the specified release of Prometheus Node Exporter"
+  - Create a dedicated system user for Prometheus Node Exporter _(if not already present)_"
+  - Extract 'node_exporter' from {{ install_prometheus_node_exporter.name }}"
+  - Set the systemd service file up for Prometheus Node Exporter"
+  - Force systemd to reread configuration files for services"
+  - Enable and restart systemd service for Prometheus Node Exporter"
 
 
 ## :exclamation: Requirements

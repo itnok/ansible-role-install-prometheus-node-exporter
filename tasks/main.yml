@@ -7,7 +7,7 @@
 
 - name: "Check latest release available of Prometheus Node Exporter"
   uri:
-    url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"
+    url: "https://api.github.com/repos/prometheus/node_exporter/releases/{{ '' if install_prometheus == 'latest' else 'tags/' }}{{ install_prometheus }}"
     return_content: yes
   register: latest_node_exporter
 
