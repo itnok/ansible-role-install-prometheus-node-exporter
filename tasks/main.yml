@@ -15,6 +15,7 @@
   get_url:
     url: "{{ item.browser_download_url }}"
     dest: "/tmp/node_exporter-sha256sums.txt"
+  delegate_to: localhost
   with_items: "{{ latest_node_exporter.json.assets }}"
   when:
     - item.name is search("sha256sums")
