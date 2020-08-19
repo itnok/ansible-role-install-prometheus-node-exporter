@@ -51,7 +51,8 @@
 - name: "Add SHA256 checksum for {{ install_prometheus }} release to 'install_prometheus_node_exporter' fact"
   set_fact:
     install_prometheus_node_exporter: "{{ install_prometheus_node_exporter | combine({ 'sha256sum': item.split()[0] }) }}"
-  with_lines: "{{ prometheus_sha256sums['content'] | b64decode }}"
+  with_items:
+    - "{{ prometheus_sha256sums['content'] | b64decode }}"
   when: item is search("{{ install_prometheus_node_exporter.name }}")
 
 - name: "Download {{ install_prometheus }} release of Prometheus Node Exporter"
