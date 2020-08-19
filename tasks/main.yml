@@ -31,6 +31,10 @@
     path: "{{ prometheus_temp.path }}/node_exporter-sha256sums.txt"
   register: prometheus_sha256sums
 
+- name: "Decode Base64-encoded SHA256 checksum string"
+  set_fact:
+    prometheus_sha256sums_decoded: "{{ prometheus_sha256sums['content'] | b64decode }}"
+
 - name: "Remove temporary directory created to save SHA256 checksums"
   file:
     path: "{{ prometheus_temp.path }}"
@@ -51,8 +55,7 @@
 - name: "Add SHA256 checksum for {{ install_prometheus }} release to 'install_prometheus_node_exporter' fact"
   set_fact:
     install_prometheus_node_exporter: "{{ install_prometheus_node_exporter | combine({ 'sha256sum': item.split()[0] }) }}"
-  with_items:
-    - "{{ prometheus_sha256sums['content'] | b64decode }}"
+  with_items: prometheus_sha256sums_decoded.splitlines()
   when: item is search("{{ install_prometheus_node_exporter.name }}")
 
 - name: "Download {{ install_prometheus }} release of Prometheus Node Exporter"
