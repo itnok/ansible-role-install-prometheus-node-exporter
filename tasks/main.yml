@@ -32,9 +32,10 @@
   register: prometheus_sha256sums
 
 - name: "Remove temporary directory created to save SHA256 checksums"
-  tempfile:
+  file:
     path: "{{ prometheus_temp.path }}"
     state: absent
+  when: prometheus_temp.path is defined
 
 - name: "Create download info for {{ install_prometheus }} release of Prometheus Node Exporter"
   set_fact:
