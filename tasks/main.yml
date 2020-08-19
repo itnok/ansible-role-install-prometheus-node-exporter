@@ -11,14 +11,30 @@
     return_content: yes
   register: latest_node_exporter
 
+- name: "Create temporary directory on localhost to save SHA256 checksums"
+  tempfile:
+    state: directory
+    prefix: "ansible-prometheus"
+    suffix: "{{ install_prometheus }}"
+  delegate_to: localhost
+  become: no
+  register: prometheus_temp
+
 - name: "Download list of SHA256 checksums for {{ install_prometheus }} release of Prometheus Node Exporter"
   get_url:
     url: "{{ item.browser_download_url }}"
-    dest: "/tmp/node_exporter-sha256sums.txt"
+    dest: "{{ prometheus_temp.path }}/node_exporter-sha256sums.txt"
   delegate_to: localhost
   with_items: "{{ latest_node_exporter.json.assets }}"
   when:
     - item.name is search("sha256sums")
+
+- name: "Remove temporary directory created to save SHA256 checksums from localhost"
+  tempfile:
+    path: "{{ prometheus_temp.path }}"
+    state: absent
+  delegate_to: localhost
+  become: no
 
 - name: "Create download info for {{ install_prometheus }} release of Prometheus Node Exporter"
   set_fact:
@@ -34,7 +50,7 @@
 - name: "Add SHA256 checksum for {{ install_prometheus }} release to 'install_prometheus_node_exporter' fact"
   set_fact:
     install_prometheus_node_exporter: "{{ install_prometheus_node_exporter | combine({ 'sha256sum': item.split()[0] }) }}"
-  with_lines: cat "/tmp/node_exporter-sha256sums.txt"
+  with_lines: cat "{{ prometheus_temp.path }}/node_exporter-sha256sums.txt"
   when: item is search("{{ install_prometheus_node_exporter.name }}")
 
 - name: "Download {{ install_prometheus }} release of Prometheus Node Exporter"
