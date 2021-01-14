@@ -17,7 +17,10 @@ galaxy_info:
   # - CC-BY-4.0
   license: MIT
 
-  min_ansible_version: 2.9
+  # Due to a bug related to systemd and newer kernels in many Linux
+  # distributions this role needs a much newer version of `ansible`.
+  # https://github.com/ansible/ansible/issues/71528#issuecomment-729778048
+  min_ansible_version: 2.10.4
 
   # If this a Container Enabled role, provide the minimum Ansible Container version.
   # min_ansible_container_version:
