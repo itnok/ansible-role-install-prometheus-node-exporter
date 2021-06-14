@@ -15,6 +15,8 @@
     url: "https://api.github.com/repos/prometheus/node_exporter/releases/{{ '' if install_prometheus == 'latest' else 'tags/' }}{{ install_prometheus }}"
     return_content: yes
   register: latest_node_exporter
+  retries: 7
+  delay: 15
 
 - name: "Create temporary directory to save SHA256 checksums"
   tempfile:
@@ -28,6 +30,8 @@
   get_url:
     url: "{{ item.browser_download_url }}"
     dest: "{{ prometheus_temp.path }}/node_exporter-sha256sums.txt"
+  retries: 7
+  delay: 15
   with_items: "{{ latest_node_exporter.json.assets }}"
   changed_when: false
   when:
@@ -37,6 +41,8 @@
   slurp:
     path: "{{ prometheus_temp.path }}/node_exporter-sha256sums.txt"
   register: prometheus_sha256sums
+  retries: 7
+  delay: 15
 
 - name: "Decode Base64-encoded SHA256 checksum string"
   set_fact:
@@ -71,6 +77,8 @@
     url: "{{ install_prometheus_node_exporter.url }}"
     dest: "/tmp/{{ install_prometheus_node_exporter.name }}"
     checksum: "sha256:{{ install_prometheus_node_exporter.sha256sum }}"
+  retries: 7
+  delay: 15
 
 - name: "Create a dedicated system user for Prometheus Node Exporter"
   user:
