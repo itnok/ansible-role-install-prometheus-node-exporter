@@ -20,8 +20,8 @@ jobs:
 addons:
   apt:
     packages:
-    - python3-pip
-    - curl
+      - python3-pip
+      - curl
 
 install:
   # Install ansible
