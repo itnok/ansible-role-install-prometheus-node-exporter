@@ -6,6 +6,10 @@
 - name: "Gather facts"
   setup:    # equivalent to "gather_facts: yes"
 
+- name: "Check is_ubuntu facts"
+  include_role:
+    name: itnok.is_ubuntu
+
 - name: "Check latest release available of Prometheus Node Exporter"
   uri:
     url: "https://api.github.com/repos/prometheus/node_exporter/releases/{{ '' if install_prometheus == 'latest' else 'tags/' }}{{ install_prometheus }}"
@@ -18,12 +22,14 @@
     prefix: "ansible-prometheus"
     suffix: "{{ install_prometheus }}"
   register: prometheus_temp
+  changed_when: false
 
 - name: "Download list of SHA256 checksums for {{ install_prometheus }} release of Prometheus Node Exporter"
   get_url:
     url: "{{ item.browser_download_url }}"
     dest: "{{ prometheus_temp.path }}/node_exporter-sha256sums.txt"
   with_items: "{{ latest_node_exporter.json.assets }}"
+  changed_when: false
   when:
     - item.name is search("sha256sums")
 
@@ -40,6 +46,7 @@
   file:
     path: "{{ prometheus_temp.path }}"
     state: absent
+  changed_when: false
   when: prometheus_temp.path is defined
 
 - name: "Create download info for {{ install_prometheus }} release of Prometheus Node Exporter"
@@ -50,15 +57,14 @@
   with_items: "{{ latest_node_exporter.json.assets }}"
   when:
     - item.name is search("linux-amd64")
-    - ansible_facts["distribution"] == "Ubuntu" or
-      ansible_facts["distribution"] == "Debian"
+    - ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
 
 - name: "Add SHA256 checksum for {{ install_prometheus }} release to 'install_prometheus_node_exporter' fact"
   set_fact:
     install_prometheus_node_exporter: "{{ install_prometheus_node_exporter | combine({ 'sha256sum': item.split()[0] }) }}"
   with_items:
     - "{{ prometheus_sha256sums_decoded.splitlines() }}"
-  when: item is search("{{ install_prometheus_node_exporter.name }}")
+  when: item is search(install_prometheus_node_exporter.name)
 
 - name: "Download {{ install_prometheus }} release of Prometheus Node Exporter"
   get_url:
@@ -73,6 +79,7 @@
     system: yes
     create_home: no
     state: present
+  become: yes
 
 - name: "Extract 'node_exporter' from {{ install_prometheus_node_exporter.name }}"
   unarchive:
@@ -85,6 +92,7 @@
     owner: "node_exporter"
     group: "node_exporter"
     remote_src: yes
+  become: yes
 
 - name: "Set the systemd service file up for Prometheus Node Exporter"
   ini_file:
@@ -108,6 +116,7 @@
     - { section: "Service", option: "Type", value: "simple" }
     - { section: "Service", option: "ExecStart", value: "/usr/local/bin/node_exporter" }
     - { section: "Install", option: "WantedBy", value: "multi-user.target" }
+  become: yes
 
 - name: "Ensure better spacing between sections in systemd service file"
   lineinfile:
@@ -119,13 +128,18 @@
   with_items:
     - { regex: "After=.*" }
     - { regex: "ExecStart=.*" }
+  become: yes
 
 - name: "Force systemd to reread configuration files for services"
   systemd:
     daemon_reload: yes
+  become: yes
+  when: not is_ubuntu_inside_container | bool
 
 - name: "Enable and restart systemd service for Prometheus Node Exporter"
   systemd:
     name: "node_exporter"
     enabled: yes
     state: restarted
+  become: yes
+  when: not is_ubuntu_inside_container | bool
