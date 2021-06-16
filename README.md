@@ -1,7 +1,7 @@
 install-prometheus-node-exporter
 ================================
 
-[![Build Status](https://travis-ci.org/itnok/ansible-role-install-prometheus-node-exporter.svg?branch=master)](https://travis-ci.org/itnok/ansible-role-install-prometheus-node-exporter) [![GitHub tag](https://img.shields.io/github/v/tag/itnok/ansible-role-install-prometheus-node-exporter?sort=semver)](https://github.com/itnok/ansible-role-install-prometheus-node-exporter/tags/) [![Ansible Role](https://img.shields.io/ansible/role/50087)](https://galaxy.ansible.com/itnok/install_prometheus_node_exporter)
+[![Build Status](https://github.com/itnok/ansible-role-install-prometheus-node-exporter/workflows/CI/badge.svg)](https://github.com/itnok/ansible-role-install-prometheus-node-exporter/actions/workflows/main.yml) [![GitHub tag](https://img.shields.io/github/v/tag/itnok/ansible-role-install-prometheus-node-exporter?sort=semver)](https://github.com/itnok/ansible-role-install-prometheus-node-exporter/tags/) [![Ansible Role](https://img.shields.io/ansible/role/50087)](https://galaxy.ansible.com/itnok/install_prometheus_node_exporter)
 
 Install Prometheus Node Exporter on a supported host.
 
