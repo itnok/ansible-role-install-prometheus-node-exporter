@@ -34,7 +34,7 @@ jobs:
           submodules: recursive
           lfs: true
       - name: "Run all Ansible Molecule tests"
-        uses: robertdebock/molecule-action@2
+        uses: robertdebock/molecule-action@2.6.17
         with:
           command: test
   release:
@@ -46,6 +46,6 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: galaxy
-        uses: robertdebock/galaxy-action@1
+        uses: robertdebock/galaxy-action@1.1.0
         with:
           galaxy_api_key: "${{ secrets.ANSIBLE_GALAXY_API_KEY }}"
