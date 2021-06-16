@@ -38,6 +38,20 @@ platforms:
     ### the container used for testing...
     env:
       ANSIBLE_USER: "user"
+  - name: itnok-debian-buster
+    ### Supplying a registry URL here where
+    ### an updated image can be found will
+    ### eventually prevent building it on-the-fly
+    ### (If needed uncomment lines below)
+    # registry:
+    #   url: "<https://registry.url.here:port>"
+    image: ${MOLECULE_DISTRO:-'debian:buster'}
+    pre_build_image: false
+    ### All the key/value pairs for `env` will be
+    ### used to create environment variables inside
+    ### the container used for testing...
+    env:
+      ANSIBLE_USER: "user"
 provisioner:
   name: ansible
   inventory:
